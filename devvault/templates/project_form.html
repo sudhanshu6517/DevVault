@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Edit Project{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <form class="form-grid" method="post">
+    <label>Name<input name="name" value="{{ form_data.get('name', project.name) if form_data is defined else project.name }}" required></label>
+    <label>Project folder
+      <span class="path-picker">
+        <input id="edit-folder-path" name="folder_path" value="{{ form_data.get('folder_path', project.folder_path) if form_data is defined else project.folder_path }}" required>
+        <button class="button secondary" type="button" data-native-picker data-picker-url="{{ url_for('browse_folder') }}" data-picker-input="#edit-folder-path" data-picker-status="#edit-folder-status">Browse…</button>
+      </span>
+      <small class="picker-status" id="edit-folder-status" role="status" aria-live="polite"></small>
+    </label>
+    {% set selected_language = form_data.get('language', project.language) if form_data is defined else project.language %}
+    <label>Primary language
+      <span class="select-wrap">
+        <select name="language" class="language-select" aria-describedby="edit-language-help">
+          {% if selected_language not in languages %}<option value="{{ selected_language }}" selected>{{ selected_language }} (saved value)</option>{% endif %}
+          {% for group, options in language_groups %}
+          <optgroup label="{{ group }}">
+            {% for language in options %}<option value="{{ language }}" {{ 'selected' if selected_language == language else '' }}>{{ language }}</option>{% endfor %}
+          </optgroup>
+          {% endfor %}
+        </select>
+      </span>
+      <small class="field-help" id="edit-language-help">Choose the main language used in this project.</small>
+    </label>
+    <label>Tags<input name="tags" value="{{ form_data.get('tags', project.tags) if form_data is defined else project.tags }}"></label>
+    <label class="field-wide">Description<textarea name="description">{{ form_data.get('description', project.description) if form_data is defined else project.description }}</textarea></label>
+    <button class="button" type="submit">Save changes</button>
+  </form>
+</section>
+{% endblock %}

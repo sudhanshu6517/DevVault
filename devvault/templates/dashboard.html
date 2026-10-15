@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<section class="stats">
+  <article><span>PORTFOLIO PROJECTS</span><b>{{ stats.projects }}</b><small>Saved locally</small></article>
+  <article><span>FILES IN LATEST SCANS</span><b>{{ stats.total_files }}</b><small>Across registered projects</small></article>
+  <article><span>PYTHON FILES</span><b>{{ stats.python_files }}</b><small>In each project's latest scan</small></article>
+  <article><span>LINES OF CODE</span><b>{{ stats.physical_lines }}</b><small>Across latest scans</small></article>
+  <article><span>SCRIPT RUNS</span><b>{{ stats.executions }}</b><small>{{ stats.successes }} successful · {{ stats.failures }} failed</small></article>
+  <article><span>RUN SUCCESS RATE</span><b>{{ ((stats.successes / stats.executions * 100)|round|int) if stats.executions else 0 }}%</b><small>Based on saved runs</small></article>
+  <article><span>AVERAGE RUN TIME</span><b>{{ '%.2f'|format(stats.average_duration or 0) }}s</b><small>Across recorded script runs</small></article>
+</section>
+<section class="panel portfolio-summary">
+  <div><p class="eyebrow">DEVELOPER PORTFOLIO</p><h2>{{ profile.full_name or 'Make this workspace yours' }}</h2><p class="muted">{{ profile.headline or 'Add a short profile, then bring together your projects and reviewer feedback.' }}</p></div>
+  <div class="actions">
+    <a class="button secondary" href="{{ url_for('profile') }}">{{ 'Edit profile' if profile.full_name or profile.headline else 'Set up profile' }}</a>
+    <a class="button" href="{{ url_for('export_portfolio') }}">Export portfolio</a>
+  </div>
+</section>
+<div class="grid-2">
+  <section class="panel">
+    <div class="panel-head"><h2>Recently accessed</h2><a href="{{ url_for('projects') }}">View explorer →</a></div>
+    {% if projects %}
+    <table><tr><th>Project</th><th>Language</th><th>Last accessed</th></tr>{% for p in projects %}<tr><td><a href="{{ url_for('project_detail',project_id=p.id) }}">{{ p.name }}</a><small>{{ p.folder_path }}</small></td><td>{{ p.language }}</td><td>{{ p.accessed_at }}</td></tr>{% endfor %}</table>
+    {% else %}
+    <div class="empty"><strong>No projects registered</strong><p>Register a local folder to start your first project showcase.</p><a class="button" href="{{ url_for('projects') }}">Register project</a></div>
+    {% endif %}
+  </section>
+  <section class="panel">
+    <div class="panel-head"><h2>Recent scan results</h2><a href="{{ url_for('autopsy_index') }}">Open lab →</a></div>
+    {% if scans %}
+    <table><tr><th>Project</th><th>Python</th><th>Lines</th></tr>{% for s in scans %}<tr><td>{{ s.project_name }}<small>{{ s.created_at }}</small></td><td>{{ s.python_files }}</td><td>{{ s.non_empty_lines }}</td></tr>{% endfor %}</table>
+    {% else %}
+    <div class="empty"><strong>Autopsy queue is clear</strong><p>Scan a project to add file counts and code metrics to your portfolio.</p></div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

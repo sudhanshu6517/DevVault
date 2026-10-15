@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Autopsy Lab' if autopsy_mode else 'Project Explorer' }}{% endblock %}
+{% block content %}
+<section class="panel" id="autopsy">
+  <div class="panel-head">
+    <h2>{{ 'Choose a vault to inspect' if autopsy_mode else 'Registered codebases' }}</h2>
+    <a class="button secondary" href="{{ url_for('export_portfolio') }}">Export portfolio</a>
+  </div>
+  <form class="project-filters" method="get" action="{{ url_for('autopsy_index' if autopsy_mode else 'projects') }}">
+    <label>Search<input name="q" value="{{ query }}" placeholder="Name, description, language, or tags"></label>
+    <label>Language<select name="language_filter"><option value="">All languages</option>{% for language in available_languages %}<option value="{{ language }}" {{ 'selected' if language_filter == language else '' }}>{{ language }}</option>{% endfor %}</select></label>
+    <label>Tag<select name="tag_filter"><option value="">All tags</option>{% for tag in available_tags %}<option value="{{ tag }}" {{ 'selected' if tag_filter == tag else '' }}>{{ tag }}</option>{% endfor %}</select></label>
+    <button class="button secondary" type="submit">Filter projects</button>
+    {% if query or language_filter or tag_filter %}<a class="clear-filters" href="{{ url_for('autopsy_index' if autopsy_mode else 'projects') }}">Clear filters</a>{% endif %}
+  </form>
+  <form class="form-grid" method="post" action="{{ url_for('projects') }}">
+    <input type="hidden" name="q" value="{{ query }}">
+    <input type="hidden" name="language_filter" value="{{ language_filter }}">
+    <input type="hidden" name="tag_filter" value="{{ tag_filter }}">
+    <label>Name<input name="name" value="{{ form_data.get('name', '') if form_data is defined else '' }}" placeholder="Project name" required></label>
+    <label>Project folder
+      <span class="path-picker">
+        <input id="new-folder-path" name="folder_path" value="{{ form_data.get('folder_path', '') if form_data is defined else '' }}" placeholder="Choose a folder or enter its path" required>
+        <button class="button secondary" type="button" data-native-picker data-picker-url="{{ url_for('browse_folder') }}" data-picker-input="#new-folder-path" data-picker-status="#new-folder-status">Browse…</button>
+      </span>
+      <small class="picker-status" id="new-folder-status" role="status" aria-live="polite"></small>
+    </label>
+    {% set selected_language = form_data.get('language', 'Python') if form_data is defined else 'Python' %}
+    <label>Primary language
+      <span class="select-wrap">
+        <select name="language" class="language-select" aria-describedby="new-language-help">
+          {% if selected_language not in languages %}<option value="{{ selected_language }}" selected>{{ selected_language }} (saved value)</option>{% endif %}
+          {% for group, options in language_groups %}
+          <optgroup label="{{ group }}">
+            {% for language in options %}<option value="{{ language }}" {{ 'selected' if selected_language == language else '' }}>{{ language }}</option>{% endfor %}
+          </optgroup>
+          {% endfor %}
+        </select>
+      </span>
+      <small class="field-help" id="new-language-help">Choose the main language used in this project.</small>
+    </label>
+    <label>Tags<input name="tags" value="{{ form_data.get('tags', '') if form_data is defined else '' }}" placeholder="Tags, comma separated"></label>
+    <label class="field-wide">Description<textarea name="description" placeholder="Description">{{ form_data.get('description', '') if form_data is defined else '' }}</textarea></label>
+    <button class="button" type="submit">Add project</button>
+  </form>
+  {% if projects %}
+  <div class="cards">
+    {% for p in projects %}
+    <article class="project-card">
+      <div><span class="chip">{{ p.language }}</span><h3>{{ p.name }}</h3><p>{{ p.description or 'No description provided.' }}</p><small>{{ p.folder_path }}</small></div>
+      <div class="actions">
+        <a class="button secondary" href="{{ url_for('project_detail',project_id=p.id) }}">Open vault</a>
+        <a class="button secondary" href="{{ url_for('autopsy_view',project_id=p.id) }}">Autopsy lab</a>
+        <a class="button secondary" href="{{ url_for('history',project_id=p.id) }}">Run history</a>
+        <a class="button secondary" href="{{ url_for('edit_project',project_id=p.id) }}">Edit</a>
+        <form method="post" action="{{ url_for('delete_project',project_id=p.id) }}" onsubmit="return confirm('Delete this project and its saved results?')"><button class="danger-link">Delete</button></form>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+  {% elif query or language_filter or tag_filter %}
+  <div class="empty"><strong>No matching projects</strong><p>Try changing or clearing your filters.</p></div>
+  {% endif %}
+</section>
+{% endblock %}

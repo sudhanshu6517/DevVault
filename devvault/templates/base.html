@@ -1,0 +1,75 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>DevVault</title>
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static',filename='css/forms.css') }}">
+</head>
+<body class="{{ 'auth-page' if active_page in ['login', 'setup_account'] else '' }}">
+  {% if active_page not in ['login', 'setup_account'] %}
+  <aside>
+    <div class="brand"><span class="mark">DV</span><div><strong>DEVVAULT</strong><small>CODEBASE INTELLIGENCE LAB</small></div></div>
+    <nav>
+      <a class="{{ 'active' if active_page=='dashboard' else '' }}" href="{{ url_for('dashboard') }}">⌂ Command Center</a>
+      <a class="{{ 'active' if active_page in ['projects','project_detail','edit_project'] else '' }}" href="{{ url_for('projects') }}">▣ Project Explorer</a>
+      <a class="{{ 'active' if active_page=='profile' else '' }}" href="{{ url_for('profile') }}">♙ Developer Profile</a>
+      <a class="{{ 'active' if active_page=='autopsy_view' else '' }}" href="{{ url_for('autopsy_index') }}">⌁ Autopsy Lab</a>
+      <a class="{{ 'active' if active_page=='history' else '' }}" href="{{ url_for('history') }}">◷ Run History</a>
+    </nav>
+    <form class="logout-form" method="post" action="{{ url_for('logout') }}"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button type="submit">Sign out</button></form>
+    <div class="side-note">LOCAL MODE<br><span>SQLite persistence enabled</span></div>
+  </aside>
+  {% endif %}
+  <main class="{{ 'auth-main' if active_page in ['login', 'setup_account'] else '' }}">
+    <header><div><p class="eyebrow">DEVELOPER OPERATIONS / LOCAL WORKSPACE</p><h1>{% block title %}Command Center{% endblock %}</h1></div>{% if active_page not in ['login', 'setup_account'] %}<div class="header-actions"><a class="button" href="{{ url_for('projects') }}">+ Register project</a></div>{% endif %}</header>
+    {% with messages=get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="flash {{ category }}" role="status">{{ message }}</div>{% endfor %}{% endwith %}
+    {% block content %}{% endblock %}
+  </main>
+  <script>
+    document.addEventListener("click", (event) => {
+      const button = event.target.closest("[data-peek-password]");
+      if (!button) return;
+      const input = document.getElementById(button.dataset.peekPassword);
+      if (!input) return;
+      const showing = input.type === "password";
+      input.type = showing ? "text" : "password";
+      button.textContent = showing ? "Hide" : "Peek";
+      button.setAttribute("aria-label", `${showing ? "Hide" : "Show"} ${input.name.replaceAll("_", " ")}`);
+      button.setAttribute("aria-pressed", String(showing));
+      input.focus();
+    });
+
+    document.addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-native-picker]");
+      if (!button) return;
+
+      const input = document.querySelector(button.dataset.pickerInput);
+      const status = document.querySelector(button.dataset.pickerStatus);
+      button.disabled = true;
+      if (status) status.textContent = "Waiting for selection…";
+      try {
+        const response = await fetch(button.dataset.pickerUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: "{}"
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "The picker could not be opened.");
+        if (result.cancelled) {
+          if (status) status.textContent = "Selection cancelled; the current value was kept.";
+        } else {
+          input.value = result.path;
+          input.dispatchEvent(new Event("change", { bubbles: true }));
+          if (status) status.textContent = "Selection applied.";
+        }
+      } catch (error) {
+        if (status) status.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

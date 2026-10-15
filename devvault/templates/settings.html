@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<section class="panel narrow">
+  <h2>Local workspace</h2>
+  <p>DevVault stores its data in your operating system application-data directory.</p>
+  <dl>
+    <dt>Windows database</dt><dd>%LOCALAPPDATA%\DevVault\devvault.sqlite3</dd>
+    <dt>Local sign-in</dt><dd>One local account protects this single-user workspace. Passwords are stored as hashes; there is no cloud authentication.</dd>
+    <dt>Execution safety</dt><dd>Scripts run only after an explicit action. Timeouts are not a complete security sandbox; run trusted code only.</dd>
+    <dt>Network scope</dt><dd>The development server listens on this computer only at 127.0.0.1.</dd>
+  </dl>
+</section>
+{% endblock %}

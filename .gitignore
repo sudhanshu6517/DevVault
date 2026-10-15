@@ -1,0 +1,26 @@
+# v0 sandbox internal files
+__v0_runtime_loader.js
+__v0_devtools.tsx
+__v0_jsx-dev-runtime.ts
+.snowflake/
+.design-cache/
+.v0-trash/
+.vercel/
+
+# Environment variables
+.env
+.env.*
+.env*.local
+
+# Common ignores
+.venv/
+venv/
+node_modules
+.next/
+__pycache__/
+*.py[cod]
+*.db
+*.sqlite
+*.sqlite3
+session.key
+.DS_Store

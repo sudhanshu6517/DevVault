@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% block title %}{{ project.name }}{% endblock %}
+{% block content %}
+<style>
+  .source-card{border-color:rgba(226,185,95,.55);background:linear-gradient(145deg,rgba(117,68,37,.95),rgba(45,26,16,.98))}
+  .card-kicker{color:#ffe39a;text-transform:uppercase;letter-spacing:2px;font-size:.68rem;font-weight:700;margin-bottom:6px}
+  .upload-form{display:grid;gap:12px}
+  .file-drop{display:grid;place-items:center;gap:4px;min-height:126px;padding:18px;border:1px dashed rgba(255,227,154,.65);border-radius:8px;background:rgba(25,13,8,.28);text-align:center;cursor:pointer;transition:background .2s,transform .2s}
+  .file-drop:hover{background:rgba(226,185,95,.13);transform:translateY(-2px)}
+  .file-drop input{position:absolute;opacity:0;width:1px;height:1px}
+  .file-drop strong{color:#fff3d2}
+  .file-drop small{color:#c9a978}
+  .drop-icon{display:grid;place-items:center;width:32px;height:32px;border:1px solid #e2b95f;border-radius:50%;color:#ffe39a;font-size:1.35rem;line-height:1}
+</style>
+<div class="detail-head">
+  <div><p class="muted">{{ project.folder_path }}</p><p>{{ project.description }}</p></div>
+  <div class="actions"><a class="button secondary" href="{{ url_for('autopsy_view',project_id=project.id) }}">Autopsy Lab</a><a class="button" href="{{ url_for('report',project_id=project.id) }}">Save report</a></div>
+</div>
+<div class="grid-2">
+  <section class="panel vault-card source-card">
+    <div class="card-kicker">Vault intake</div><h2>Add source files</h2>
+    <p class="muted">Bring files from your computer into this project vault. Folder structure is preserved.</p>
+    <form class="upload-form" method="post" enctype="multipart/form-data" action="{{ url_for('upload_sources', project_id=project.id) }}">
+      <label class="file-drop"><input type="file" name="source_files" multiple webkitdirectory directory accept=".py,.js,.ts,.tsx,.jsx,.java,.c,.cpp,.h,.html,.css,.json,.md,.txt,.yml,.yaml,.toml,.sql"><span class="drop-icon">＋</span><strong>Choose a folder or files</strong><small>Click to browse · multiple files supported</small></label>
+      <button class="button" type="submit">Add to vault</button>
+    </form>
+  </section>
+  <section class="panel">
+    <h2>Run Autopsy</h2><p class="muted">Uses pathlib and ast. It never executes scanned files.</p>
+    <form method="post" action="{{ url_for('autopsy',project_id=project.id) }}"><button class="button">Run real scan</button></form>
+  </section>
+  <section class="panel">
+    <h2>Trusted script runner</h2><p class="warning">Explicit action only. Timeout is not a security sandbox.</p>
+    <form class="form-grid" method="post" action="{{ url_for('run_script',project_id=project.id) }}">
+      <label class="field-wide">Python script
+        <span class="path-picker">
+          <input id="script-path" name="script_path" value="{{ form_data.get('script_path', '') }}" placeholder="Relative path, e.g. main.py" required>
+          <button class="button secondary" type="button" data-native-picker data-picker-url="{{ url_for('browse_script', project_id=project.id) }}" data-picker-input="#script-path" data-picker-status="#script-picker-status">Browse…</button>
+        </span>
+        <small class="picker-status" id="script-picker-status" role="status" aria-live="polite"></small>
+      </label>
+      <label>Timeout in seconds<input name="timeout" type="number" min="1" max="120" value="{{ form_data.get('timeout', 10) }}"></label>
+      <button class="button" type="submit">Execute script</button>
+    </form>
+  </section>
+</div>
+<section class="panel">
+  <div class="panel-head"><h2>Recent executions</h2><a href="{{ url_for('history') }}">Full history →</a></div>
+  {% if executions %}
+  <table><tr><th>Script</th><th>Status</th><th>Duration</th><th>Exit</th></tr>
+    {% for e in executions %}<tr><td>{{ e.script_path }}</td><td><span class="status {{ e.status|lower|replace(' ','-') }}">{{ e.status }}</span></td><td>{{ '%.3f'|format(e.duration or 0) }}s</td><td>{{ e.exit_code if e.exit_code is not none else '—' }}</td></tr>{% endfor %}
+  </table>
+  {% else %}<div class="empty">No executions recorded.</div>{% endif %}
+</section>
+<section class="panel reviews-panel" id="reviews">
+  <div class="panel-head">
+    <div><h2>Reviewer feedback</h2><p class="muted">{% if review_summary.count %}{{ review_summary.count }} review{{ '' if review_summary.count == 1 else 's' }} · average {{ '%.1f'|format(review_summary.average) }} / 5{% else %}No reviews yet — invite a mentor or teammate to leave feedback.{% endif %}</p></div>
+  </div>
+  <form class="form-grid review-form" method="post" action="{{ url_for('add_review', project_id=project.id) }}">
+    <label>Reviewer name<input name="reviewer" maxlength="100" value="{{ review_form.get('reviewer', '') }}" placeholder="Name (optional)"></label>
+    <label>Code quality rating
+      <select name="rating" required>
+        <option value="">Choose a rating</option>
+        {% for rating in range(5, 0, -1) %}<option value="{{ rating }}" {{ 'selected' if review_form.get('rating', '')|string == rating|string else '' }}>{{ '★' * rating }}{{ '☆' * (5-rating) }} — {{ rating }} / 5</option>{% endfor %}
+      </select>
+    </label>
+    <label class="field-wide">Feedback note<textarea name="note" maxlength="2000" rows="4" placeholder="What works well? What could be improved?" required>{{ review_form.get('note', '') }}</textarea></label>
+    <button class="button" type="submit">Save review</button>
+  </form>
+  {% if reviews %}
+  <div class="review-list">
+    {% for review in reviews %}
+    <article class="review-entry">
+      <div class="review-heading"><strong>{{ review.reviewer }}</strong><span class="review-stars" aria-label="{{ review.rating }} out of 5 stars">{{ '★' * review.rating }}{{ '☆' * (5-review.rating) }}</span><time>{{ review.created_at }}</time></div>
+      <p>{{ review.note }}</p>
+    </article>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

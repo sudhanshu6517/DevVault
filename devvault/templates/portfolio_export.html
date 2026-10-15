@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ profile.full_name or 'Developer' }} — DevVault Portfolio</title>
+  <style>
+    :root{font-family:Inter,Segoe UI,Arial,sans-serif;color:#17231e;background:#f3f6f2;line-height:1.6}
+    body{max-width:920px;margin:0 auto;padding:42px 24px}
+    header,.project{padding:26px;margin:18px 0;background:white;border:1px solid #dce5dd;border-radius:14px;box-shadow:0 8px 22px #10251b0b}
+    h1,h2,h3{line-height:1.2;color:#183d2b}
+    h1{font-size:2.3rem;margin:0}
+    .headline{font-size:1.15rem;color:#52675a}
+    .muted,small{color:#607266}
+    .skills{display:flex;flex-wrap:wrap;gap:8px;padding:0;list-style:none}
+    .skills li{padding:4px 11px;border-radius:20px;background:#e8f3eb;color:#245c39}
+    .metrics{display:flex;flex-wrap:wrap;gap:8px}
+    .metrics span{padding:5px 9px;border-radius:6px;background:#f1f5f2}
+    .review{border-left:3px solid #69a879;padding:8px 14px;margin:12px 0;background:#f8faf8}
+    .stars{color:#a46608;letter-spacing:2px}
+    @media print{body{padding:0;background:white}.project,header{box-shadow:none;break-inside:avoid}}
+  </style>
+</head>
+<body>
+  <header>
+    <p class="muted">DEVVAULT · LOCAL DEVELOPER PORTFOLIO</p>
+    <h1>{{ profile.full_name or 'Developer portfolio' }}</h1>
+    {% if profile.headline %}<p class="headline">{{ profile.headline }}</p>{% endif %}
+    {% if profile.bio %}<p>{{ profile.bio }}</p>{% endif %}
+    {% set skills = profile.skills.split(',') if profile.skills else [] %}
+    {% if skills %}<h2>Technical skills</h2><ul class="skills">{% for skill in skills if skill.strip() %}<li>{{ skill.strip() }}</li>{% endfor %}</ul>{% endif %}
+  </header>
+  <main>
+    <h2>Projects ({{ projects|length }})</h2>
+    {% for project in projects %}
+    <article class="project">
+      <h3>{{ project.name }}</h3>
+      <p class="muted">{{ project.language }}{% if project.tags %} · {{ project.tags }}{% endif %}</p>
+      {% if project.description %}<p>{{ project.description }}</p>{% endif %}
+      <div class="metrics">
+        {% if project.total_files is not none %}<span>{{ project.total_files }} files</span><span>{{ project.python_files or 0 }} Python files</span><span>{{ project.physical_lines or 0 }} lines</span>{% endif %}
+        <span>{{ project.execution_count }} recorded runs</span>
+        {% if project.review_count %}<span>{{ '%.1f'|format(project.review_average) }} / 5 from {{ project.review_count }} review{{ '' if project.review_count == 1 else 's' }}</span>{% endif %}
+      </div>
+      {% if project.reviews %}
+      <h4>Recent feedback</h4>
+      {% for review in project.reviews %}
+      <blockquote class="review"><span class="stars" aria-label="{{ review.rating }} out of 5 stars">{{ '★' * review.rating }}{{ '☆' * (5-review.rating) }}</span> <strong>{{ review.reviewer }}</strong><br>{{ review.note }}</blockquote>
+      {% endfor %}
+      {% endif %}
+    </article>
+    {% else %}
+    <p>No projects have been added yet.</p>
+    {% endfor %}
+  </main>
+</body>
+</html>

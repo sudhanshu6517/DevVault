@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Developer Profile{% endblock %}
+{% block content %}
+<section class="panel profile-panel">
+  <div class="panel-head">
+    <div><h2>Your portfolio profile</h2><p class="muted">Create a concise introduction for the portfolio summary you export.</p></div>
+    <a class="button secondary" href="{{ url_for('export_portfolio') }}">Preview / export portfolio</a>
+  </div>
+  <form class="form-grid profile-form" method="post" action="{{ url_for('profile') }}">
+    <label>Name<input name="full_name" maxlength="100" value="{{ profile.get('full_name', '') }}" placeholder="Your name" autocomplete="name"></label>
+    <label>Headline<input name="headline" maxlength="160" value="{{ profile.get('headline', '') }}" placeholder="e.g. Computer science student · Python developer"></label>
+    <label class="field-wide">Short bio<textarea name="bio" maxlength="1200" rows="5" placeholder="A few sentences about what you build and what you are looking for.">{{ profile.get('bio', '') }}</textarea><small class="field-help">Up to 1,200 characters. This stays in your local DevVault database.</small></label>
+    <label class="field-wide">Technical skills<input name="skills" maxlength="2400" value="{{ profile.get('skills', '') }}" placeholder="Python, Flask, SQLite, TypeScript"><small class="field-help">Separate skills with commas.</small></label>
+    <button class="button" type="submit">Save profile</button>
+  </form>
+</section>
+<section class="panel profile-transfer">
+  <div><h2>Profile backup</h2><p class="muted">Export or restore your profile fields as a small JSON file. Project data and reviews are not included.</p></div>
+  <div class="transfer-actions">
+    <a class="button secondary" href="{{ url_for('export_profile') }}">Download profile JSON</a>
+    <form method="post" enctype="multipart/form-data" action="{{ url_for('import_profile') }}">
+      <label>Import JSON<input type="file" name="profile_file" accept=".json,application/json" required></label>
+      <button class="button secondary" type="submit">Import profile</button>
+    </form>
+  </div>
+</section>
+<section class="panel account-security" id="account-security">
+  <h2>Local account security</h2>
+  <p class="muted">Signed in as <strong>{{ account.username }}</strong>. Your account and projects remain on this computer.</p>
+  <form class="form-grid password-form" method="post" action="{{ url_for('change_password') }}">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+    <label>Current password
+      <span class="password-input"><input id="current-password" type="password" name="current_password" autocomplete="current-password" required><button class="password-peek" type="button" data-peek-password="current-password" aria-label="Show current password" aria-pressed="false">Peek</button></span>
+    </label>
+    <label>New password
+      <span class="password-input"><input id="new-password" type="password" name="new_password" minlength="12" maxlength="128" autocomplete="new-password" required><button class="password-peek" type="button" data-peek-password="new-password" aria-label="Show new password" aria-pressed="false">Peek</button></span>
+      <small class="field-help">Use 12–128 characters.</small>
+    </label>
+    <label class="field-wide">Confirm new password
+      <span class="password-input"><input id="change-confirm-password" type="password" name="confirm_password" minlength="12" maxlength="128" autocomplete="new-password" required><button class="password-peek" type="button" data-peek-password="change-confirm-password" aria-label="Show confirm new password" aria-pressed="false">Peek</button></span>
+    </label>
+    <button class="button secondary" type="submit">Change password</button>
+  </form>
+</section>
+<p class="local-note">Your password is hashed in the local database. DevVault does not use cloud sign-in or send profile information anywhere.</p>
+{% endblock %}
